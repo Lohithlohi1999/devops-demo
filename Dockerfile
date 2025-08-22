@@ -1,28 +1,27 @@
-# Use a Maven + JDK base image to build the project
+# Stage 1: Build the application
 FROM maven:3.9.3-eclipse-temurin-17 AS build
 
-# Set working directory
 WORKDIR /app
 
-# Copy pom.xml and download dependencies first (cache)
-COPY pom.xml .
-RUN mvn dependency:go-offline
+# Copy Maven files and source code
+COPY devopsdemo/pom.xml .
+COPY devopsdemo/src ./src
 
-# Copy project source
-COPY src ./src
-
-# Build the Spring Boot jar
+# Build the Spring Boot app
 RUN mvn clean package -DskipTests
 
-# Use JDK base image for running the app
-FROM eclipse-temurin:17-jdk
+# Stage 2: Run the application
+FROM eclipse-temurin:17-jdk-jammy
 
-# Copy the jar from build stage
+WORKDIR /app
+
+# Copy the jar from the build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose port
+# Expose port 8080
 EXPOSE 8080
 
-# Run the Spring Boot app
-ENTRYPOINT ["java","-jar","/app.jar"]
+# Run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
 
